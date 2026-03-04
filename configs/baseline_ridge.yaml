@@ -1,0 +1,28 @@
+# Baseline Ridge regression for NIR spectral data
+experiment_name: baseline_ridge
+
+# --- data ---
+train_file: train.csv
+test_file: test.csv
+id_col: id
+target_col: y
+
+# --- preprocessing ---
+preprocess:
+  - name: snv
+  - name: sg
+    window_length: 11
+    polyorder: 2
+    deriv: 1
+  - name: standard_scaler
+
+# --- model ---
+model_type: ridge
+model_params:
+  alpha: 1.0
+
+# --- CV ---
+n_folds: 5
+split_method: kfold
+seed: 42
+shuffle: true
