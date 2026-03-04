@@ -125,7 +125,7 @@ def _cmd_cv(cfg, run_dir, data_dir, log):
     if cfg.split_method == "group_kfold" and cfg.group_col:
         import pandas as pd
 
-        df = pd.read_csv(data_dir / cfg.train_file)
+        df = pd.read_csv(data_dir / cfg.train_file, encoding="cp932")
         groups = df[cfg.group_col].values
 
     result = run_cv(cfg, X, y, run_dir, groups=groups)
