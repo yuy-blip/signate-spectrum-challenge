@@ -1,0 +1,37 @@
+# LightGBM shallow + strong regularization (GKF-optimized)
+# For cross-species generalization: shallow trees prevent species memorization
+experiment_name: lgbm_shallow_gkf
+
+train_file: train.csv
+test_file: test.csv
+id_col: "sample number"
+target_col: "含水率"
+
+preprocess:
+  - name: snv
+  - name: sg
+    window_length: 11
+    polyorder: 2
+    deriv: 1
+  - name: binning
+    bin_size: 8
+  - name: standard_scaler
+
+model_type: lgbm
+model_params:
+  n_estimators: 2000
+  learning_rate: 0.01
+  max_depth: 3
+  num_leaves: 7
+  min_child_samples: 20
+  subsample: 0.7
+  colsample_bytree: 0.5
+  reg_alpha: 5.0
+  reg_lambda: 10.0
+  verbose: -1
+
+n_folds: 5
+split_method: group_kfold
+group_col: "species number"
+seed: 42
+shuffle: true

@@ -32,6 +32,7 @@ model_params:
   verbose: -1
 
 n_folds: 5
-split_method: kfold
+split_method: group_kfold
+group_col: "species number"
 seed: 42
 shuffle: true
