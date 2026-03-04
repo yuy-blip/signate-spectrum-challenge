@@ -225,6 +225,110 @@ class TestConfigOverride:
         assert (run_dir / "metrics.json").exists()
 
 
+class TestColumnAutoDetection:
+    """Tests for robust column auto-detection in data loading."""
+
+    def test_id_col_auto_detect_sample_number(self, tmp_path):
+        """When config says id_col='id' but CSV has 'sample number'."""
+        from spectral_challenge.config import Config
+        from spectral_challenge.data.load import load_train
+
+        rng = np.random.RandomState(0)
+        df = pd.DataFrame({"sample number": range(10), "含水率": rng.randn(10)})
+        for i in range(5):
+            df[f"{9000 + i}.123"] = rng.randn(10)
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        df.to_csv(data_dir / "train.csv", index=False)
+
+        cfg = Config(id_col="id", target_col="含水率")
+        X, y, ids = load_train(cfg, data_dir)
+        assert list(ids) == list(range(10))
+        assert X.shape == (10, 5)
+
+    def test_target_col_auto_detect_moisture(self, tmp_path):
+        """When config says target_col='y' but CSV has '含水率'."""
+        from spectral_challenge.config import Config
+        from spectral_challenge.data.load import load_train
+
+        rng = np.random.RandomState(0)
+        target = rng.randn(10)
+        df = pd.DataFrame({"id": range(10), "含水率": target, "feat_a": rng.randn(10)})
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        df.to_csv(data_dir / "train.csv", index=False)
+
+        cfg = Config(id_col="id", target_col="y")
+        X, y, ids = load_train(cfg, data_dir)
+        np.testing.assert_array_almost_equal(y, target)
+
+    def test_normalised_column_matching(self, tmp_path):
+        """Whitespace/case differences should still match."""
+        from spectral_challenge.config import Config
+        from spectral_challenge.data.load import load_train
+
+        rng = np.random.RandomState(0)
+        # Column with leading/trailing spaces and different case
+        df = pd.DataFrame({" Sample Number ": range(10), "Y": rng.randn(10), "f": rng.randn(10)})
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        df.to_csv(data_dir / "train.csv", index=False)
+
+        cfg = Config(id_col="sample number", target_col="y")
+        X, y, ids = load_train(cfg, data_dir)
+        assert len(ids) == 10
+
+    def test_float_column_name_features(self, tmp_path):
+        """Columns named as float wavelengths should be auto-detected as features."""
+        from spectral_challenge.config import Config
+        from spectral_challenge.data.load import load_train
+
+        rng = np.random.RandomState(0)
+        n_wl = 20
+        data = {"sample number": range(10), "species number": [1] * 10, "含水率": rng.randn(10)}
+        for i in range(n_wl):
+            data[f"{9000 + i * 10}.12345"] = rng.randn(10)
+        df = pd.DataFrame(data)
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        df.to_csv(data_dir / "train.csv", index=False)
+
+        cfg = Config(id_col="sample number", target_col="含水率")
+        X, y, ids = load_train(cfg, data_dir)
+        # 'species number' is NOT a float name → excluded; only wavelength cols
+        assert X.shape == (10, n_wl)
+
+    def test_missing_target_raises(self, tmp_path):
+        """Should raise KeyError when target column cannot be found at all."""
+        from spectral_challenge.config import Config
+        from spectral_challenge.data.load import load_train
+
+        df = pd.DataFrame({"id": range(5), "feat": [1.0] * 5})
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        df.to_csv(data_dir / "train.csv", index=False)
+
+        cfg = Config(id_col="id", target_col="nonexistent")
+        with pytest.raises(KeyError, match="Could not detect target column"):
+            load_train(cfg, data_dir)
+
+    def test_id_fallback_first_column(self, tmp_path):
+        """If no id candidates match, fall back to the first column."""
+        from spectral_challenge.config import Config
+        from spectral_challenge.data.load import load_train
+
+        rng = np.random.RandomState(0)
+        df = pd.DataFrame({"番号": range(10), "y": rng.randn(10), "feat": rng.randn(10)})
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        df.to_csv(data_dir / "train.csv", index=False)
+
+        cfg = Config(id_col="id", target_col="y")
+        X, y, ids = load_train(cfg, data_dir)
+        # Should fall back to first column '番号'
+        assert list(ids) == list(range(10))
+
+
 class TestEndToEnd:
     """Full pipeline: CV → predict → submit on synthetic data."""
 
