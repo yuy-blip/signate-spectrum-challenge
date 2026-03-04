@@ -4,8 +4,8 @@ experiment_name: baseline_pls
 # --- data ---
 train_file: train.csv
 test_file: test.csv
-id_col: id
-target_col: y
+id_col: "sample number"
+target_col: "含水率"
 
 # --- preprocessing ---
 preprocess:

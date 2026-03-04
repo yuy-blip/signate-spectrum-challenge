@@ -1,0 +1,37 @@
+# PLS with absorbance + MSC + SG(deriv=1) preprocessing
+#
+# Example sweep:
+#   for k in 10 20 30 40 50; do
+#     python -m spectral_challenge.cli cv \
+#       --config configs/absorbance_msc_pls.yaml \
+#       --override model_params.n_components=$k
+#   done
+experiment_name: absorbance_msc_pls
+
+# --- data ---
+train_file: train.csv
+test_file: test.csv
+id_col: "sample number"
+target_col: "含水率"
+
+# --- preprocessing ---
+preprocess:
+  - name: absorbance
+    base: e
+  - name: msc
+  - name: sg
+    window_length: 11
+    polyorder: 2
+    deriv: 1
+  - name: standard_scaler
+
+# --- model ---
+model_type: pls
+model_params:
+  n_components: 30
+
+# --- CV ---
+n_folds: 5
+split_method: kfold
+seed: 42
+shuffle: true
