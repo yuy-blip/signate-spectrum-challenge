@@ -21,6 +21,8 @@ _REGISTRY: dict[str, tuple[str, str]] = {
     "pls": ("sklearn.cross_decomposition", "PLSRegression"),
     "svr": ("sklearn.svm", "SVR"),
     "lgbm": ("lightgbm", "LGBMRegressor"),
+    "elastic_net": ("sklearn.linear_model", "ElasticNet"),
+    "lasso": ("sklearn.linear_model", "Lasso"),
 }
 
 

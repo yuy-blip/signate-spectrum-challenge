@@ -27,6 +27,7 @@ from spectral_challenge.preprocess.binning import BinningTransformer
 from spectral_challenge.preprocess.msc import EMSCTransformer, MSCTransformer
 from spectral_challenge.preprocess.sg import DerivativeTransformer, SavitzkyGolayTransformer
 from spectral_challenge.preprocess.snv import SNVTransformer
+from spectral_challenge.preprocess.wavelength_selector import WavelengthSelector
 
 logger = logging.getLogger("spectral_challenge")
 
@@ -40,6 +41,8 @@ _REGISTRY: dict[str, type] = {
     "absorbance": AbsorbanceTransformer,
     "binning": BinningTransformer,
     "standard_scaler": StandardScaler,
+    "wavelength_selector": WavelengthSelector,
+    "select_wn": WavelengthSelector,
 }
 
 

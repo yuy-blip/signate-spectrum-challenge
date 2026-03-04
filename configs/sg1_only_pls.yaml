@@ -1,0 +1,23 @@
+# SG 1st derivative (no SNV) + PLS
+experiment_name: sg1_only_pls
+
+train_file: train.csv
+test_file: test.csv
+id_col: "sample number"
+target_col: "含水率"
+
+preprocess:
+  - name: sg
+    window_length: 11
+    polyorder: 2
+    deriv: 1
+  - name: standard_scaler
+
+model_type: pls
+model_params:
+  n_components: 28
+
+n_folds: 5
+split_method: kfold
+seed: 42
+shuffle: true

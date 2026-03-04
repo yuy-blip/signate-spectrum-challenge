@@ -1,0 +1,37 @@
+# LightGBM on PLS-reduced features (use PLS as preprocessing)
+# Note: We use a 2-step approach: PLS dimensionality reduction → LightGBM
+# But since PLS components are just linear projections, we approximate
+# by using SNV+SG+binning to reduce dimensions, then LightGBM directly
+experiment_name: lgbm_spectral
+
+train_file: train.csv
+test_file: test.csv
+id_col: "sample number"
+target_col: "含水率"
+
+preprocess:
+  - name: snv
+  - name: sg
+    window_length: 11
+    polyorder: 2
+    deriv: 1
+  - name: binning
+    bin_size: 8
+  - name: standard_scaler
+
+model_type: lgbm
+model_params:
+  n_estimators: 1000
+  learning_rate: 0.03
+  max_depth: 6
+  num_leaves: 31
+  subsample: 0.8
+  colsample_bytree: 0.8
+  reg_alpha: 0.1
+  reg_lambda: 1.0
+  verbose: -1
+
+n_folds: 5
+split_method: kfold
+seed: 42
+shuffle: true

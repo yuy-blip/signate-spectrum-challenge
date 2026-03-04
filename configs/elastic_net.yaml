@@ -1,0 +1,26 @@
+# ElasticNet on SNV + SG(d1) preprocessed spectra
+experiment_name: elastic_net
+
+train_file: train.csv
+test_file: test.csv
+id_col: "sample number"
+target_col: "含水率"
+
+preprocess:
+  - name: snv
+  - name: sg
+    window_length: 11
+    polyorder: 2
+    deriv: 1
+  - name: standard_scaler
+
+model_type: elastic_net
+model_params:
+  alpha: 0.1
+  l1_ratio: 0.5
+  max_iter: 10000
+
+n_folds: 5
+split_method: kfold
+seed: 42
+shuffle: true
