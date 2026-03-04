@@ -23,6 +23,11 @@ _REGISTRY: dict[str, tuple[str, str]] = {
     "lgbm": ("lightgbm", "LGBMRegressor"),
     "elastic_net": ("sklearn.linear_model", "ElasticNet"),
     "lasso": ("sklearn.linear_model", "Lasso"),
+    "rf": ("sklearn.ensemble", "RandomForestRegressor"),
+    "kernel_ridge": ("sklearn.kernel_ridge", "KernelRidge"),
+    "extra_trees": ("sklearn.ensemble", "ExtraTreesRegressor"),
+    "huber": ("sklearn.linear_model", "HuberRegressor"),
+    "xgb": ("xgboost", "XGBRegressor"),
 }
 
 

@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # ULTIMATE RUN: Cross-species generalization strategy
 #
-# Phase 7: PLS/Ridge/LightGBM × preprocessing × hyperparams (ALL GKF)
-# Phase 8: Multi-seed for best GKF configs
-# Phase 9: Final ensemble & submission
+# Phase 7:  PLS/Ridge/LightGBM × preprocessing × hyperparams (ALL GKF)
+# Phase 7b: Extreme push — new models, EMSC, feature eng, target transforms
+# Phase 9:  Final ensemble & submission
 #
 # Usage:
-#   bash scripts/run_ultimate.sh          # phases 7-8
-#   bash scripts/run_ultimate.sh 8        # start from phase 8
+#   bash scripts/run_ultimate.sh          # phases 7 + 7b
+#   bash scripts/run_ultimate.sh 7b       # start from phase 7b only
 set -euo pipefail
 
 START="${1:-7}"
@@ -21,22 +21,22 @@ echo "  Starting from Phase $START"
 echo "  $(date)"
 echo "============================================================"
 
-if [ "$START" -le 7 ]; then
+if [ "$START" = "7" ]; then
   echo "[$(date +%H:%M:%S)] Phase 7: Preprocessing & model sweep (GKF)..."
   bash scripts/phase7_advanced.sh 2>&1 | tee logs/phase7.log
 fi
 
-if [ "$START" -le 8 ]; then
-  echo "[$(date +%H:%M:%S)] Phase 8: Multi-seed best configs..."
-  bash scripts/phase8_multiseed_lgbm.sh 2>&1 | tee logs/phase8.log
+if [ "$START" = "7" ] || [ "$START" = "7b" ]; then
+  echo "[$(date +%H:%M:%S)] Phase 7b: Extreme optimization..."
+  bash scripts/phase7b_extreme.sh 2>&1 | tee logs/phase7b.log
 fi
 
 echo ""
 echo "============================================================"
-echo "  Phases 7-8 DONE! $(date)"
+echo "  DONE! $(date)"
 echo "============================================================"
 echo ""
 echo "Next steps:"
-echo "  1. python scripts/analyze_results.py --top 30"
+echo "  1. python scripts/analyze_results.py --top 50"
 echo "  2. Edit scripts/phase9_final_ensemble.sh with best runs"
 echo "  3. bash scripts/phase9_final_ensemble.sh"

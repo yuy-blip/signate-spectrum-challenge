@@ -22,6 +22,7 @@ from spectral_challenge.data.split import cv_splits
 from spectral_challenge.metrics import rmse
 from spectral_challenge.models.factory import create_model
 from spectral_challenge.preprocess.pipeline import build_preprocess_pipeline
+from spectral_challenge.preprocess.target_transform import TransformedTargetRegressor
 
 logger = logging.getLogger("spectral_challenge")
 
@@ -65,8 +66,16 @@ def run_cv(
         X_train_t = pipe.fit_transform(X_train)
         X_val_t = pipe.transform(X_val)
 
-        # Build & fit model
-        model = create_model(cfg.model_type, cfg.model_params)
+        # Build & fit model (with optional target transform)
+        base_model = create_model(cfg.model_type, cfg.model_params)
+        if cfg.target_transform and cfg.target_transform != "none":
+            model = TransformedTargetRegressor(
+                regressor=base_model,
+                transform=cfg.target_transform,
+                lmbda=cfg.target_transform_lambda,
+            )
+        else:
+            model = base_model
         model.fit(X_train_t, y_train)
 
         # Predict
