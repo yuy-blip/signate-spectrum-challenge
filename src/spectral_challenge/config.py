@@ -35,6 +35,10 @@ class Config:
     seed: int = 42
     shuffle: bool = True
 
+    # --- target transform ---
+    target_transform: str = "none"  # none | log1p | log | sqrt | boxcox
+    target_transform_lambda: float = 0.5  # lambda for boxcox
+
     # --- output ---
     outdir: str = ""  # filled at runtime if empty
     experiment_name: str = "default"
