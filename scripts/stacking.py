@@ -28,7 +28,7 @@ import joblib
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import Ridge
-from sklearn.model_selection import KFold
+from sklearn.model_selection import GroupKFold, KFold
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
@@ -67,20 +67,26 @@ def train_meta_learner(
     meta_type: str = "ridge",
     n_folds: int = 5,
     seed: int = 42,
+    groups: np.ndarray | None = None,
 ):
     """Train a level-2 meta-learner on OOF predictions.
 
-    Uses CV on the meta-features to avoid overfitting.
+    Uses GroupKFold (if groups provided) to avoid species leakage.
     """
     n_samples = oof_matrix.shape[0]
 
-    # Meta-model CV for robust estimation
-    kf = KFold(n_splits=n_folds, shuffle=True, random_state=seed)
+    # Meta-model CV — use GroupKFold if groups available
+    if groups is not None:
+        kf = GroupKFold(n_splits=n_folds)
+        split_iter = kf.split(oof_matrix, y_true, groups)
+    else:
+        kf = KFold(n_splits=n_folds, shuffle=True, random_state=seed)
+        split_iter = kf.split(oof_matrix)
     meta_oof = np.zeros(n_samples)
     meta_test_preds = []
     fold_scores = []
 
-    for fold_idx, (train_idx, val_idx) in enumerate(kf.split(oof_matrix)):
+    for fold_idx, (train_idx, val_idx) in enumerate(split_iter):
         X_train = oof_matrix[train_idx]
         y_train = y_true[train_idx]
         X_val = oof_matrix[val_idx]
