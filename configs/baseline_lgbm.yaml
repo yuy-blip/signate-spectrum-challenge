@@ -1,0 +1,31 @@
+# Baseline LightGBM for NIR spectral data
+experiment_name: baseline_lgbm
+
+# --- data ---
+train_file: train.csv
+test_file: test.csv
+id_col: id
+target_col: y
+
+# --- preprocessing ---
+preprocess:
+  - name: snv
+  - name: standard_scaler
+
+# --- model ---
+model_type: lgbm
+model_params:
+  n_estimators: 500
+  learning_rate: 0.05
+  num_leaves: 31
+  min_child_samples: 5
+  subsample: 0.8
+  colsample_bytree: 0.8
+  random_state: 42
+  verbose: -1
+
+# --- CV ---
+n_folds: 5
+split_method: kfold
+seed: 42
+shuffle: true
