@@ -40,12 +40,44 @@ class Config:
     experiment_name: str = "default"
 
     @classmethod
-    def from_yaml(cls, path: str | Path, overrides: dict[str, Any] | None = None) -> Config:
-        """Load config from a YAML file, with optional CLI overrides."""
+    def from_yaml(
+        cls,
+        path: str | Path,
+        overrides: dict[str, Any] | None = None,
+        cli_overrides: list[str] | None = None,
+    ) -> Config:
+        """Load config from a YAML file, with optional CLI overrides.
+
+        Parameters
+        ----------
+        path : str or Path
+            Path to the YAML config file.
+        overrides : dict, optional
+            Simple key-value overrides (legacy, flat dict only).
+        cli_overrides : list of str, optional
+            Hydra-style ``key=value`` strings (supports dot-notation).
+        """
+        import logging
+
+        from spectral_challenge.config_override import apply_overrides, parse_overrides
+
+        log = logging.getLogger("spectral_challenge")
+
         with open(path) as f:
             raw = yaml.safe_load(f) or {}
+
+        # Legacy flat overrides
         if overrides:
             raw.update(overrides)
+
+        # Hydra-style dot-notation overrides
+        if cli_overrides:
+            valid_keys = set(cls.__dataclass_fields__)
+            parsed = parse_overrides(cli_overrides)
+            apply_overrides(raw, parsed, valid_top_keys=valid_keys)
+            for orig_key, _segments, value in parsed:
+                log.info("Config override: %s = %r", orig_key, value)
+
         return cls(**{k: v for k, v in raw.items() if k in cls.__dataclass_fields__})
 
     def to_dict(self) -> dict[str, Any]:
