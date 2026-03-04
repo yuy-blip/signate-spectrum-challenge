@@ -134,6 +134,97 @@ class TestModelFactory:
             create_model("nonexistent_model")
 
 
+class TestConfigOverride:
+    """Tests for Hydra-style --override parsing and application."""
+
+    def test_parse_simple(self):
+        from spectral_challenge.config_override import parse_overrides
+
+        result = parse_overrides(["n_folds=3", "shuffle=false", "model_params.alpha=0.5"])
+        assert result[0] == ("n_folds", ["n_folds"], 3)
+        assert result[1] == ("shuffle", ["shuffle"], False)
+        assert result[2] == ("model_params.alpha", ["model_params", "alpha"], 0.5)
+
+    def test_parse_array_index(self):
+        from spectral_challenge.config_override import parse_overrides
+
+        result = parse_overrides(["preprocess[0].deriv=1"])
+        assert result[0][1] == ["preprocess", 0, "deriv"]
+        assert result[0][2] == 1
+
+    def test_apply_nested(self):
+        from spectral_challenge.config_override import apply_overrides, parse_overrides
+
+        cfg = {"model_type": "ridge", "model_params": {"alpha": 1.0}}
+        parsed = parse_overrides(["model_params.alpha=0.5"])
+        apply_overrides(cfg, parsed)
+        assert cfg["model_params"]["alpha"] == 0.5
+
+    def test_apply_array(self):
+        from spectral_challenge.config_override import apply_overrides, parse_overrides
+
+        cfg = {"preprocess": [{"name": "snv"}, {"name": "sg", "deriv": 0}]}
+        parsed = parse_overrides(["preprocess[1].deriv=2"])
+        apply_overrides(cfg, parsed)
+        assert cfg["preprocess"][1]["deriv"] == 2
+
+    def test_invalid_key_raises(self):
+        from spectral_challenge.config_override import apply_overrides, parse_overrides
+
+        parsed = parse_overrides(["nonexistent_key=42"])
+        with pytest.raises(ValueError, match="Unknown config key"):
+            apply_overrides({}, parsed, valid_top_keys={"model_type", "seed"})
+
+    def test_invalid_format_raises(self):
+        from spectral_challenge.config_override import parse_overrides
+
+        with pytest.raises(ValueError, match="Expected 'key=value'"):
+            parse_overrides(["no_equals_sign"])
+
+    def test_type_inference(self):
+        from spectral_challenge.config_override import parse_overrides
+
+        result = parse_overrides([
+            "a=true", "b=123", "c=0.5", "d=null", "e=[1,2,3]", "f=hello",
+        ])
+        values = [r[2] for r in result]
+        assert values == [True, 123, 0.5, None, [1, 2, 3], "hello"]
+
+    def test_config_from_yaml_with_cli_overrides(self, tmp_path):
+        from spectral_challenge.config import Config
+
+        cfg_path = tmp_path / "cfg.yaml"
+        cfg_path.write_text("model_type: ridge\nmodel_params:\n  alpha: 1.0\nn_folds: 5\n")
+        cfg = Config.from_yaml(cfg_path, cli_overrides=["model_params.alpha=0.5", "n_folds=3"])
+        assert cfg.model_params["alpha"] == 0.5
+        assert cfg.n_folds == 3
+
+    def test_cli_cv_with_override(self, synthetic_env, tmp_path):
+        """End-to-end: cv command with --override."""
+        from spectral_challenge.cli import main
+
+        cfg_path = tmp_path / "cfg.yaml"
+        cfg_path.write_text(
+            "model_type: ridge\n"
+            "model_params:\n  alpha: 1.0\n"
+            "preprocess:\n  - name: standard_scaler\n"
+            "n_folds: 3\n"
+        )
+        run_dir = synthetic_env["run_dir"]
+        data_dir = synthetic_env["data_dir"]
+
+        main([
+            "cv",
+            "--config", str(cfg_path),
+            "--outdir", str(run_dir),
+            "--data-dir", str(data_dir),
+            "--override", "model_params.alpha=0.01",
+            "--set", "seed=0",
+        ])
+
+        assert (run_dir / "metrics.json").exists()
+
+
 class TestEndToEnd:
     """Full pipeline: CV → predict → submit on synthetic data."""
 

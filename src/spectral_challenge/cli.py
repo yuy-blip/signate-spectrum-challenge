@@ -6,6 +6,14 @@ Usage::
     python -m spectral_challenge.cli fit      --config configs/baseline_ridge.yaml
     python -m spectral_challenge.cli predict  --config configs/baseline_ridge.yaml --run-dir runs/xxx
     python -m spectral_challenge.cli submit   --config configs/baseline_ridge.yaml --run-dir runs/xxx
+
+Override examples::
+
+    python -m spectral_challenge.cli cv --config cfg.yaml --override model_params.n_components=60
+    python -m spectral_challenge.cli cv --config cfg.yaml --set n_folds=3 --set seed=0
+    for k in 10 20 30; do
+        python -m spectral_challenge.cli cv --config cfg.yaml --override model_params.n_components=$k
+    done
 """
 
 from __future__ import annotations
@@ -51,6 +59,17 @@ def _add_common(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--folds", type=int, default=None, help="Override number of CV folds")
     parser.add_argument("--outdir", type=str, default=None, help="Override output directory")
     parser.add_argument("--data-dir", type=str, default=None, help="Override data directory")
+    parser.add_argument(
+        "--override", "--set",
+        dest="overrides",
+        action="append",
+        default=[],
+        metavar="KEY=VALUE",
+        help=(
+            "Hydra-style config override (repeatable). "
+            "Examples: model_params.alpha=0.5  n_folds=3  shuffle=false"
+        ),
+    )
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -67,7 +86,7 @@ def main(argv: list[str] | None = None) -> None:
     if args.folds is not None:
         overrides["n_folds"] = args.folds
 
-    cfg = Config.from_yaml(args.config, overrides)
+    cfg = Config.from_yaml(args.config, overrides, cli_overrides=args.overrides or None)
 
     data_dir = Path(args.data_dir) if args.data_dir else DATA_RAW
 
