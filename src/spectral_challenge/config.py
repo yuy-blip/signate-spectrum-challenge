@@ -19,6 +19,7 @@ class Config:
     id_col: str = "id"
     target_col: str = "y"
     feature_prefix: str = ""  # empty = auto-detect (all numeric cols except id/target)
+    encoding: str = ""  # empty = auto-detect (try utf-8 → cp932)
 
     # --- preprocessing ---
     preprocess: list[dict[str, Any]] = field(default_factory=lambda: [{"name": "standard_scaler"}])

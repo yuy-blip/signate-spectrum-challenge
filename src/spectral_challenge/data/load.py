@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 import numpy as np
@@ -9,6 +10,24 @@ import pandas as pd
 
 from spectral_challenge.config import Config
 from spectral_challenge.paths import DATA_RAW
+
+logger = logging.getLogger("spectral_challenge")
+
+_ENCODING_CANDIDATES = ["utf-8", "cp932", "shift_jis", "euc-jp", "latin-1"]
+
+
+def _read_csv(path: Path, encoding: str = "") -> pd.DataFrame:
+    """Read a CSV, auto-detecting encoding if not specified."""
+    if encoding:
+        return pd.read_csv(path, encoding=encoding)
+    for enc in _ENCODING_CANDIDATES:
+        try:
+            df = pd.read_csv(path, encoding=enc)
+            logger.info("Read %s with encoding=%s", path.name, enc)
+            return df
+        except (UnicodeDecodeError, UnicodeError):
+            continue
+    return pd.read_csv(path, encoding="latin-1")
 
 
 def load_train(cfg: Config, data_dir: Path | None = None) -> tuple[np.ndarray, np.ndarray, pd.Index]:
@@ -21,10 +40,12 @@ def load_train(cfg: Config, data_dir: Path | None = None) -> tuple[np.ndarray, n
     ids : pandas Index
     """
     data_dir = data_dir or DATA_RAW
-    df = pd.read_csv(data_dir / cfg.train_file)
+    df = _read_csv(data_dir / cfg.train_file, cfg.encoding)
+    logger.info("Train columns: %s", list(df.columns))
     ids = df[cfg.id_col]
     y = df[cfg.target_col].values.astype(np.float64)
     X = _extract_features(df, cfg)
+    logger.info("Train shape: X=%s, y=%s", X.shape, y.shape)
     return X, y, ids
 
 
@@ -37,9 +58,10 @@ def load_test(cfg: Config, data_dir: Path | None = None) -> tuple[np.ndarray, pd
     ids : pandas Index
     """
     data_dir = data_dir or DATA_RAW
-    df = pd.read_csv(data_dir / cfg.test_file)
+    df = _read_csv(data_dir / cfg.test_file, cfg.encoding)
     ids = df[cfg.id_col]
     X = _extract_features(df, cfg)
+    logger.info("Test shape: X=%s", X.shape)
     return X, ids
 
 
