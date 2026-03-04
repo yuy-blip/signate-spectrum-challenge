@@ -28,6 +28,11 @@ from spectral_challenge.preprocess.msc import EMSCTransformer, MSCTransformer
 from spectral_challenge.preprocess.sg import DerivativeTransformer, SavitzkyGolayTransformer
 from spectral_challenge.preprocess.snv import SNVTransformer
 from spectral_challenge.preprocess.wavelength_selector import WavelengthSelector
+from spectral_challenge.preprocess.feature_engineering import (
+    BandRatioTransformer,
+    PCAFeatureTransformer,
+    SpectralStatsTransformer,
+)
 
 logger = logging.getLogger("spectral_challenge")
 
@@ -43,6 +48,9 @@ _REGISTRY: dict[str, type] = {
     "standard_scaler": StandardScaler,
     "wavelength_selector": WavelengthSelector,
     "select_wn": WavelengthSelector,
+    "band_ratio": BandRatioTransformer,
+    "spectral_stats": SpectralStatsTransformer,
+    "pca_features": PCAFeatureTransformer,
 }
 
 
