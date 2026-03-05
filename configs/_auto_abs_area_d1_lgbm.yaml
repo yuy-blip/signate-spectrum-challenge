@@ -1,4 +1,4 @@
-experiment_name: emsc_feat_lgbm
+experiment_name: abs_area_d1
 group_col: species number
 id_col: sample number
 model_params:
@@ -15,16 +15,14 @@ model_params:
 model_type: lgbm
 n_folds: 5
 preprocess:
-- name: emsc
+- name: absorbance
+- name: area_normalize
 - deriv: 1
   name: sg
   polyorder: 2
   window_length: 7
 - bin_size: 8
   name: binning
-- name: band_ratio
-- n_regions: 10
-  name: spectral_stats
 - name: standard_scaler
 seed: 42
 shuffle: true

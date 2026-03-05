@@ -1,4 +1,4 @@
-experiment_name: emsc_feat_lgbm
+experiment_name: cr_d0
 group_col: species number
 id_col: sample number
 model_params:
@@ -15,16 +15,9 @@ model_params:
 model_type: lgbm
 n_folds: 5
 preprocess:
-- name: emsc
-- deriv: 1
-  name: sg
-  polyorder: 2
-  window_length: 7
+- name: continuum_removal
 - bin_size: 8
   name: binning
-- name: band_ratio
-- n_regions: 10
-  name: spectral_stats
 - name: standard_scaler
 seed: 42
 shuffle: true

@@ -1,9 +1,10 @@
-experiment_name: emsc_feat_lgbm
+experiment_name: linear_tree_quick
 group_col: species number
 id_col: sample number
 model_params:
   colsample_bytree: 0.5
   learning_rate: 0.05
+  linear_tree: true
   max_depth: 5
   min_child_samples: 10
   n_estimators: 400
@@ -22,9 +23,6 @@ preprocess:
   window_length: 7
 - bin_size: 8
   name: binning
-- name: band_ratio
-- n_regions: 10
-  name: spectral_stats
 - name: standard_scaler
 seed: 42
 shuffle: true

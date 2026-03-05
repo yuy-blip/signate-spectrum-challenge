@@ -1,0 +1,25 @@
+experiment_name: svr_C1.0_e0.1
+group_col: species number
+id_col: sample number
+model_params:
+  C: 1.0
+  epsilon: 0.1
+  kernel: rbf
+model_type: svr
+n_folds: 5
+preprocess:
+- name: emsc
+- deriv: 1
+  name: sg
+  polyorder: 2
+  window_length: 7
+- append: false
+  n_components: 20
+  name: pca_features
+- name: standard_scaler
+seed: 42
+shuffle: true
+split_method: group_kfold
+target_col: 含水率
+test_file: test.csv
+train_file: train.csv

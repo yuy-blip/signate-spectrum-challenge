@@ -1,4 +1,4 @@
-experiment_name: emsc_feat_lgbm
+experiment_name: tt_log1p_emsc_nobin
 group_col: species number
 id_col: sample number
 model_params:
@@ -20,15 +20,11 @@ preprocess:
   name: sg
   polyorder: 2
   window_length: 7
-- bin_size: 8
-  name: binning
-- name: band_ratio
-- n_regions: 10
-  name: spectral_stats
 - name: standard_scaler
 seed: 42
 shuffle: true
 split_method: group_kfold
 target_col: 含水率
+target_transform: log1p
 test_file: test.csv
 train_file: train.csv

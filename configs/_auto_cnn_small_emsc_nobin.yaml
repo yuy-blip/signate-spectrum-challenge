@@ -1,0 +1,34 @@
+experiment_name: cnn_small_emsc_nobin
+group_col: species number
+id_col: sample number
+model_params:
+  batch_size: 64
+  dropout: 0.3
+  epochs: 300
+  fc_sizes:
+  - 64
+  kernel_sizes:
+  - 7
+  - 5
+  lr: 0.001
+  n_filters:
+  - 16
+  - 32
+  patience: 30
+  seed: 42
+  weight_decay: 0.0001
+model_type: cnn1d
+n_folds: 5
+preprocess:
+- name: emsc
+- deriv: 1
+  name: sg
+  polyorder: 2
+  window_length: 7
+- name: standard_scaler
+seed: 42
+shuffle: true
+split_method: group_kfold
+target_col: 含水率
+test_file: test.csv
+train_file: train.csv
