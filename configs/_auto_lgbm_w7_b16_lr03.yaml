@@ -1,0 +1,31 @@
+experiment_name: lgbm_w7_b16_lr03
+group_col: species number
+id_col: sample number
+model_params:
+  colsample_bytree: 0.5
+  learning_rate: 0.03
+  max_depth: 3
+  min_child_samples: 20
+  n_estimators: 600
+  num_leaves: 7
+  reg_alpha: 5.0
+  reg_lambda: 10.0
+  subsample: 0.7
+  verbose: -1
+model_type: lgbm
+n_folds: 5
+preprocess:
+- name: snv
+- deriv: 1
+  name: sg
+  polyorder: 2
+  window_length: 7
+- bin_size: 16
+  name: binning
+- name: standard_scaler
+seed: 42
+shuffle: true
+split_method: group_kfold
+target_col: 含水率
+test_file: test.csv
+train_file: train.csv

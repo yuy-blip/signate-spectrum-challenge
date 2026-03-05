@@ -1,0 +1,22 @@
+experiment_name: log1p_pls_nc5_wide
+group_col: species number
+id_col: sample number
+model_params:
+  n_components: 5
+model_type: pls
+n_folds: 5
+preprocess:
+- name: snv
+- deriv: 1
+  name: sg
+  polyorder: 2
+  window_length: 11
+- name: standard_scaler
+seed: 42
+shuffle: true
+split_method: group_kfold
+target_col: 含水率
+target_transform: log1p
+target_transform_lambda: 0.5
+test_file: test.csv
+train_file: train.csv
