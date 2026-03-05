@@ -34,6 +34,7 @@ _REGISTRY: dict[str, tuple[str, str]] = {
     "bayesian_ridge": ("sklearn.linear_model", "BayesianRidge"),
     "gradient_boosting": ("sklearn.ensemble", "GradientBoostingRegressor"),
     "mixup_lgbm": ("spectral_challenge.models.mixup_lgbm", "MixupLGBMRegressor"),
+    "mlp": ("spectral_challenge.models.mlp", "MLPRegressor"),
 }
 
 
