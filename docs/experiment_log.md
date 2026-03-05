@@ -26,6 +26,10 @@
 | 15b | **15.58** | 25.2 | WDV + PL | ★ブレークスルー3 |
 | 15b | 15.87 | 28.8 | d7/l32 LGBM + PL | |
 | 15c | **15.10** | 25.8 | Targeted WDV + PL | ★ブレークスルー4 |
+| 16 | 14.57* | 24.9 | WDV Basis (PCA) | *シード依存で不安定(真の平均~18.97) |
+| 17-18 | ~15.8-17.4 | - | WDV Basis/targeted WDV深掘り | Phase 15c再現失敗（シード問題） |
+| 19 | 16.91 | 26.1 | **Universal WDV** | ★決定論的・シード不要 |
+| 20 | **15.63** | 27.5 | Universal WDV + 反復PL | 安定した改善 |
 
 ---
 
@@ -287,5 +291,149 @@
 
 ---
 
+## Phase 16-20: 大規模探索と新発見
+
+### Phase 16: 全LLMアイデア統合実験 (107実験)
+**目的**: Gemini/ChatGPTの全提案を実装検証
+**結果**: 最良 RMSE 14.57 (wdv_basis_k5_n30_f1.5)
+
+**試行した手法**:
+| 手法 | RMSE | 評価 |
+|------|------|------|
+| WDV Basis (PCA差分ベクトル) | 14.57* | シード依存 |
+| WDV in EMSC space | 15.4 | 微改善 |
+| min_child_samples tuning + PL | 15.97 | 微改善 |
+| KRR PL teacher | PL最大189 | 天井問題解消せず |
+| Prediction stretching | 15.46 | 微改善 |
+| Two-expert model | 15.32 | やや改善 |
+| Autoencoder features | 16.7-25 | 失敗 |
+| KNN regression | 22.6-30.2 | 使えない |
+
+### Phase 17/17b: シード安定性検証 (230+64実験)
+**★ 重大発見: WDV系手法はシード依存が極めて大きい**
+
+| 手法 | 単一シード最良 | 20シード平均 | 差異 |
+|------|-------------|------------|------|
+| WDV Basis (k=5, n=30, f=1.5) | 14.57 | **18.97** | 4.4ポイント差 |
+| Targeted WDV (n=50, f=1.5, mm=150) | 15.10* | **~20.0** | 4.9ポイント差 |
+| WDV Basis + PL | 15.81 | **16.22** | 0.4ポイント差 |
+
+**核心的発見**:
+1. Phase 15c/16の好結果はシードの運が大きく寄与
+2. PL（擬似ラベル）が安定した改善のMVP（16.14 baseline）
+3. WDV系はPLとの組み合わせで初めて安定的に効く
+
+### Phase 18: 安定改善実験 (180+実験)
+**目的**: 安定的な手法のみで構築
+**結果**: WDV単体の真の性能を確認
+
+| 手法 | RMSE | 評価 |
+|------|------|------|
+| Targeted WDV (seed平均) | 20.0 | シードなし安定値 |
+| Targeted WDV + PL | 19-21 | PL実装の問題 |
+| sqrt target transform | 17.59 | 微改善 |
+| min_child_samples=10 | 18.16 | 微改善 |
+
+### Phase 19: ブレークスルー戦略 (Gemini/ChatGPT第2回相談)
+**目的**: LOSO CV、決定論的WDV、物理ベース教師
+**結果**: 最良 RMSE 16.91 (Universal WDV)
+
+**★ 発見: Universal Water Vector (UWV)**
+- 全species共通の「水ベクトル」をPCAで抽出
+- **完全に決定論的** — シード依存なし
+- 各speciesのhigh-low差分→species平均差分→PC1 = 普遍的水分変化方向
+
+**LOSO CV (13-fold) 主要結果**:
+| 手法 | RMSE | Species 15 RMSE |
+|------|------|----------------|
+| Baseline | 18.55 | 45.8 |
+| + PL | 18.95-19.17 | 47.8-49.2 |
+| + Deterministic WDV | 18.4-21.0 | 43.0-52.7 |
+| + Universal WDV | **17.81** | 40.3 |
+
+**失敗した手法**:
+- Residual learning (Huber/Ridge base + LGBM): RMSE 210-2270（壊滅）
+- Water proxy teacher: RMSE 18.5（効果薄い）
+- Water bands only: RMSE 55.7（情報不足）
+
+### Phase 20: Universal WDV深掘り最適化
+**結果**: 最良 RMSE **15.63** (uw_iterpl2_pw0.5)
+
+**Top結果**:
+| RMSE | Folds | 手法 |
+|------|-------|------|
+| **15.63** | [12.9, 10.5, 27.5, 11.1, 9.3] | UW + 反復PL 2ラウンド (pw=0.5) |
+| 15.64 | - | Grand top-5 ensemble |
+| 15.81 | [12.7, 10.7, 27.9, 11.3, 9.3] | UW + 反復PL 3ラウンド (pw=0.5) |
+| 16.42 | [13.8, 10.5, 24.6, 13.3, 16.3] | UW + Binning(4) |
+| 16.65 | [14.5, 12.5, 26.3, 13.3, 12.8] | UW + subsample=0.6 |
+| 16.79 | [13.9, 12.4, 26.6, 14.0, 13.0] | UW (n30, f1.7) no PL |
+
+**UW最適パラメータ**: n_aug=30, extrap_factor=1.5-1.7, min_moisture=150
+**UW + targeted WDV**: 大失敗 (RMSE 22-35) — 二重WDVは過剰
+**UW in EMSC space**: 17.8-20.4 — raw spaceの方が良い
+**Multi-pipeline**: bin4が意外にFold 2で最良 (24.6)
+
+---
+
+## 核心的ボトルネック分析（更新版）
+
+### シード依存性問題
+- WDV/WDV Basisはランダムサンプリングによりシード依存
+- Phase 15cの15.10は最良シード結果
+- **解決策**: Universal WDV（決定論的、シード不要）
+- UW + 反復PL = 15.63 — 安定した実力値
+
+### Species 15問題
+- LOSO CVで判明: Species 15のRMSE = 40-50（他は10-22）
+- 含水率298.6%（訓練最大216%を大幅超過）
+- UWで40.3まで改善したが、まだ支配的
+
+### 1位 (~10) との差: 約5-6ポイント
+- 安定ベスト: 15.63
+- Fold 2 (27.5) が依然としてボトルネック
+- Fold 2を15程度に下げれば全体RMSEは~12に
+
+---
+
+## 実験統計（更新）
+
+| フェーズ | 実験数 |
+|---------|--------|
+| Phase 1-10 | ~500 |
+| Phase 12 (PL) | ~20 |
+| Phase 15-15c | ~387 |
+| Phase 16 | 107 |
+| Phase 17/17b | 298 |
+| Phase 18 | 180+ |
+| Phase 19 | 80+ |
+| Phase 20 | 200+ |
+| **合計** | **~1770+** |
+
+---
+
+## 今後の方向性
+
+### 有望
+1. **Stacking**: UW-LGBM + XGB + CatBoost のスタッキング
+2. **CARS/SPA変数選択**: NIR専用のfeature selection
+3. **1D-CNN regression**: UW拡張データで直接回帰
+4. **Domain Adaptation**: CORAL/MMDベースの特徴空間整列
+
+### 効果不明
+5. **iPLS**: 波長区間選択
+6. **GPR (ガウス過程回帰)**: PCA圧縮で外挿が改善する可能性
+
+### 試行済み・失敗確認
+- WDV Basis: シード依存（真の性能~18.97）
+- UW + targeted WDV併用: 悪化
+- Residual learning: 壊滅
+- Water proxy teacher: 効果薄い
+- Autoencoder: 効果なし
+- KNN regression: 使えない
+
+---
+
 *最終更新: 2026-03-05*
-*現在の最良スコア: CV RMSE **15.10** (Targeted WDV + Pseudo-labels)*
+*現在の安定最良スコア: CV RMSE **15.63** (Universal WDV + 反復PL)*
+*シード依存最良スコア: CV RMSE **15.10** (Targeted WDV + PL, Phase 15c)*
