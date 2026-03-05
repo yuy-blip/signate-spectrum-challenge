@@ -33,6 +33,16 @@ from spectral_challenge.preprocess.feature_engineering import (
     PCAFeatureTransformer,
     SpectralStatsTransformer,
 )
+from spectral_challenge.preprocess.normalization import (
+    AreaNormalizeTransformer,
+    ContinuumRemovalTransformer,
+    MaxNormalizeTransformer,
+    RangeNormalizeTransformer,
+)
+from spectral_challenge.preprocess.water_emsc import (
+    EMSCCoefficientExtractor,
+    WaterAwareEMSCTransformer,
+)
 
 logger = logging.getLogger("spectral_challenge")
 
@@ -51,6 +61,12 @@ _REGISTRY: dict[str, type] = {
     "band_ratio": BandRatioTransformer,
     "spectral_stats": SpectralStatsTransformer,
     "pca_features": PCAFeatureTransformer,
+    "area_normalize": AreaNormalizeTransformer,
+    "max_normalize": MaxNormalizeTransformer,
+    "range_normalize": RangeNormalizeTransformer,
+    "continuum_removal": ContinuumRemovalTransformer,
+    "water_emsc": WaterAwareEMSCTransformer,
+    "emsc_coefficients": EMSCCoefficientExtractor,
 }
 
 
