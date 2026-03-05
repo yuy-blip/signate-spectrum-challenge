@@ -1,0 +1,27 @@
+experiment_name: emsc_rf_300
+group_col: species number
+id_col: sample number
+model_params:
+  max_depth: 15
+  max_features: sqrt
+  min_samples_leaf: 3
+  n_estimators: 300
+  n_jobs: -1
+  random_state: 42
+model_type: rf
+n_folds: 5
+preprocess:
+- name: emsc
+- deriv: 1
+  name: sg
+  polyorder: 2
+  window_length: 7
+- bin_size: 8
+  name: binning
+- name: standard_scaler
+seed: 42
+shuffle: true
+split_method: group_kfold
+target_col: 含水率
+test_file: test.csv
+train_file: train.csv

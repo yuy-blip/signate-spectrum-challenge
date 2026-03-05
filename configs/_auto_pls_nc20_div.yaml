@@ -1,0 +1,20 @@
+experiment_name: pls_nc20_div
+group_col: species number
+id_col: sample number
+model_params:
+  n_components: 20
+model_type: pls
+n_folds: 5
+preprocess:
+- name: snv
+- deriv: 1
+  name: sg
+  polyorder: 2
+  window_length: 11
+- name: standard_scaler
+seed: 42
+shuffle: true
+split_method: group_kfold
+target_col: 含水率
+test_file: test.csv
+train_file: train.csv
