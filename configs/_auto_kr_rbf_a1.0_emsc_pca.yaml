@@ -1,0 +1,24 @@
+experiment_name: kr_a1.0_emsc_pca
+group_col: species number
+id_col: sample number
+model_params:
+  alpha: 1.0
+  kernel: rbf
+model_type: kernel_ridge
+n_folds: 5
+preprocess:
+- name: emsc
+- deriv: 1
+  name: sg
+  polyorder: 2
+  window_length: 7
+- append: false
+  n_components: 30
+  name: pca_features
+- name: standard_scaler
+seed: 42
+shuffle: true
+split_method: group_kfold
+target_col: 含水率
+test_file: test.csv
+train_file: train.csv

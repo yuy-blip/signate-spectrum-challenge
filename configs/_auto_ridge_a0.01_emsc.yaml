@@ -1,0 +1,20 @@
+experiment_name: ridge_a0.01_emsc
+group_col: species number
+id_col: sample number
+model_params:
+  alpha: 0.01
+model_type: ridge
+n_folds: 5
+preprocess:
+- name: emsc
+- deriv: 1
+  name: sg
+  polyorder: 2
+  window_length: 7
+- name: standard_scaler
+seed: 42
+shuffle: true
+split_method: group_kfold
+target_col: 含水率
+test_file: test.csv
+train_file: train.csv

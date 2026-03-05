@@ -1,0 +1,25 @@
+experiment_name: svr_C10.0_pca50
+group_col: species number
+id_col: sample number
+model_params:
+  C: 10.0
+  epsilon: 1.0
+  kernel: rbf
+model_type: svr
+n_folds: 5
+preprocess:
+- name: emsc
+- deriv: 1
+  name: sg
+  polyorder: 2
+  window_length: 7
+- append: false
+  n_components: 50
+  name: pca_features
+- name: standard_scaler
+seed: 42
+shuffle: true
+split_method: group_kfold
+target_col: 含水率
+test_file: test.csv
+train_file: train.csv
