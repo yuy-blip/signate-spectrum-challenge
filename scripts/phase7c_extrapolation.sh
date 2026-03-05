@@ -157,31 +157,7 @@ done
 # ===================================================================
 # E. GKF-fixed SVR/Huber (with proper base config)
 # ===================================================================
-echo "=== E: SVR/Huber (GKF-fixed) ==="
-
-# SVR with smaller bin_size and scaled data
-for C in 10.0 50.0 100.0; do
-  for eps in 0.5 1.0 3.0; do
-    python -m spectral_challenge cv \
-      --config configs/lgbm_shallow_gkf.yaml \
-      --override "model_type=svr" \
-      --override "model_params={C: $C, epsilon: $eps, kernel: rbf, gamma: scale}" \
-      --override "preprocess=[{name: emsc, poly_order: 2}, {name: sg, window_length: 7, polyorder: 2, deriv: 1}, {name: binning, bin_size: 8}, {name: standard_scaler}]" \
-      --override "experiment_name=gkf_emsc2_svr_C${C}_e${eps}"
-  done
-done
-
-# Huber (robust to outliers like ベイスギ extreme values)
-for eps_h in 1.35 1.5 2.0 3.0; do
-  for alpha in 0.001 0.01 0.1; do
-    python -m spectral_challenge cv \
-      --config configs/lgbm_shallow_gkf.yaml \
-      --override "model_type=huber" \
-      --override "model_params={epsilon: $eps_h, alpha: $alpha, max_iter: 10000}" \
-      --override "preprocess=[{name: emsc, poly_order: 2}, {name: sg, window_length: 7, polyorder: 2, deriv: 1}, {name: standard_scaler}]" \
-      --override "experiment_name=gkf_emsc2_huber_e${eps_h}_a${alpha}"
-  done
-done
+echo "=== E: SKIPPED (SVR/Huber too slow + poor accuracy) ==="
 
 # ===================================================================
 # F. Best GKF PLS/Ridge (for Fold 2 comparison)
