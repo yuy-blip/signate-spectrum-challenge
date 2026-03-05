@@ -28,6 +28,8 @@ _REGISTRY: dict[str, tuple[str, str]] = {
     "extra_trees": ("sklearn.ensemble", "ExtraTreesRegressor"),
     "huber": ("sklearn.linear_model", "HuberRegressor"),
     "xgb": ("xgboost", "XGBRegressor"),
+    "cnn1d": ("spectral_challenge.models.cnn1d", "CNN1DRegressor"),
+    "catboost": ("catboost", "CatBoostRegressor"),
 }
 
 
