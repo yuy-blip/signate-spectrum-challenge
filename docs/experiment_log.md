@@ -30,6 +30,9 @@
 | 17-18 | ~15.8-17.4 | - | WDV Basis/targeted WDV深掘り | Phase 15c再現失敗（シード問題） |
 | 19 | 16.91 | 26.1 | **Universal WDV** | ★決定論的・シード不要 |
 | 20 | **15.63** | 27.5 | Universal WDV + 反復PL | 安定した改善 |
+| **21b** | **14.83** | 25.1 | Binning(4) + UW + iterPL | ★★ブレークスルー5 |
+| **21c** | **14.12** | - | Ensemble + stretch | ★★ブレークスルー6 |
+| 21d | 14.16 | - | mm170 ensemble + stretch | 21cと同等 |
 
 ---
 
@@ -245,7 +248,10 @@
 
 | モデル | 最良RMSE | 備考 |
 |--------|---------|------|
-| **LGBM + WDV + PL** | **15.10** | ★★現在最良 |
+| **Bin4 + UW + iterPL + stretch (ensemble)** | **14.12** | ★★現在最良 |
+| Bin4 + mm170 + n800lr02 + UW + iterPL | **14.21** | ★★ 単体最良 |
+| Bin4 + UW + iterPL | 14.83 | ブレークスルー5 |
+| LGBM + WDV + PL | 15.10* | *シード依存 |
 | LGBM + PL | 15.87 | PL単体 |
 | LGBM (単体) | 17.75 | ベースライン |
 | XGBoost + PL | 16.40 | LGBMに劣る |
@@ -412,28 +418,136 @@
 
 ---
 
-## 今後の方向性
+## Phase 21: Mega Strategy (Stacking + Ceiling Breaking + Species 15 Attack)
 
-### 有望
-1. **Stacking**: UW-LGBM + XGB + CatBoost のスタッキング
-2. **CARS/SPA変数選択**: NIR専用のfeature selection
-3. **1D-CNN regression**: UW拡張データで直接回帰
-4. **Domain Adaptation**: CORAL/MMDベースの特徴空間整列
+### Phase 21b: 多様なモデル + iterPL修正
+**目的**: 3戦略同時実行（Stacking, Ceiling Breaking, Species 15 Attack）
+**★★ 重大発見: Binning(4)がBinning(8)より大幅に良い**
 
-### 効果不明
-5. **iPLS**: 波長区間選択
-6. **GPR (ガウス過程回帰)**: PCA圧縮で外挿が改善する可能性
+| 手法 | RMSE | Fold 2 | 評価 |
+|------|------|--------|------|
+| **Binning(4) + UW30 + iterPL2** | **14.83** | 25.1 | ★★ ブレークスルー5 |
+| Binning(4) + stretch (p95, s1.3) | **14.68** | - | post-processing改善 |
+| UW20 f1.0 + PL | 15.42 | 26.0 | |
+| XGBoost + UW + PL | 15.66 | 27.8 | スタッキング素材 |
+| No WDV + PL | 16.28 | 28.5 | |
+| Extreme WDV f3.0 | 18.32 | 37.5 | 単体では悪化 |
 
-### 試行済み・失敗確認
-- WDV Basis: シード依存（真の性能~18.97）
-- UW + targeted WDV併用: 悪化
-- Residual learning: 壊滅
-- Water proxy teacher: 効果薄い
-- Autoencoder: 効果なし
-- KNN regression: 使えない
+**Stacking結果**: Greedy selectionはbin4モデル単体を選択。他モデルを追加しても改善せず。
+**Nelder-Mead最適化**: stretch_bin4が支配的 (weight=1.0)
+
+**重要な発見**:
+- Binning(4) = 388特徴（vs bin8 = 194特徴）→LGBMがより細かいパターンを捕捉
+- Post-processing stretch (p95, s1.3): 上位5%の予測を1.3倍に伸ばす→外挿補正
+- Residual correction (Ridge on water features): 20.5（効果なし）
+- Quantile calibration: 効果なし
+
+### Phase 21c: Binning深掘り + Full Tuning
+**目的**: bin4発見を軸にしたフルチューニング
+**結果**: 最良 RMSE **14.12** (greedy ensemble + stretch)
+
+**Binning sweep**:
+| Bin size | RMSE | Fold 2 | 特徴量数 |
+|----------|------|--------|---------|
+| 1 (=no bin) | 16.09 | 28.6 | 1555 |
+| 2 | 15.52 | 26.9 | 777 |
+| 3 | 15.46 | 26.8 | 518 |
+| **4** | **14.83** | **25.1** | **388** |
+| 5 | 15.55 | 27.3 | 311 |
+| 6 | 15.32 | 26.3 | 259 |
+| 8 | 15.63 | 27.5 | 194 |
+| 10 | 16.16 | 28.2 | 155 |
+| 12 | 16.96 | 29.1 | 129 |
+
+**LGBM HP tuning (bin4)**:
+| HP変更 | RMSE | 評価 |
+|--------|------|------|
+| n1000, lr=0.01 | **14.56** | ★ Slow learner |
+| d6/l25, n600 | **14.59** | ★ |
+| n800, lr=0.02 | **14.66** | ★ |
+| ss=0.6 | **14.70** | ★ |
+| d4/l15 | 14.87 | |
+| mcs=30 | 15.37 | 悪化 |
+
+**mm (min_moisture) tuning**:
+| min_moisture | RMSE | Fold 2 |
+|-------------|------|--------|
+| **170** | **14.47** | **23.5** ★★ |
+| 140 | 15.09 | 25.4 |
+| 150 (default) | 14.83 | 25.1 |
+| 160 | 15.56 | 26.3 |
+| 180 | 15.66 | 27.1 |
+
+**Ensemble結果**:
+| 手法 | RMSE |
+|------|------|
+| bin4_mm170 + bin4_n1000lr01 (greedy avg) | 14.26 |
+| NM optimized (0.55 × mm170 + 0.45 × n1000) | 14.26 |
+| + stretch (p97, s1.3) | **14.12** |
+
+### Phase 21d: 勝利組み合わせの精錬
+**目的**: mm170 × 各種HP、細かいmm探索、多ラウンドPL
+**結果**: 最良 RMSE **14.16** (greedy ensemble + stretch)
+
+**mm170 × HP最良**:
+| 手法 | RMSE | Fold 2 |
+|------|------|--------|
+| mm170_n800lr02 | **14.21** | 23.2 |
+| mm170_n1500lr005 | **14.23** | 23.4 |
+| mm170_n1200lr008 | **14.24** | 23.3 |
+| mm170_d4l15_n1000 | **14.25** | 23.6 |
+| mm170_n1000lr01 | 14.32 | 23.4 |
+
+**PL rounds**: 3-5ラウンドでも14.25-14.40で安定、2ラウンドと大差なし
+**bin3/5/6 mm170**: bin4が依然最良（bin3=15.52, bin5=15.23, bin6=15.29）
+
+---
+
+## スコア推移（更新版）
+
+| Phase | 最良RMSE | Fold 2 | 手法 | 備考 |
+|-------|---------|--------|------|------|
+| 1 | 21.22 | - | LGBM baseline | |
+| 4 | 18.92 | - | EMSC導入 | ★ブレークスルー1 |
+| 12 | 16.14 | ~29.5 | 擬似ラベル | ★ブレークスルー2 |
+| 15b | 15.58 | 25.2 | WDV + PL | ★ブレークスルー3 |
+| 15c | 15.10* | 25.8 | Targeted WDV + PL | ★ブレークスルー4 (*シード依存) |
+| 20 | 15.63 | 27.5 | Universal WDV + iterPL | 安定ベスト |
+| **21b** | **14.83** | **25.1** | **Binning(4) + UW + iterPL** | **★★ブレークスルー5** |
+| **21c** | **14.12** | - | **Ensemble + stretch** | **★★ブレークスルー6** |
+| 21d | 14.16 | - | mm170 ensemble + stretch | 21cと同等 |
+
+---
+
+## 核心的ボトルネック分析（最終更新）
+
+### Binning(4)がなぜ効いたか
+1. **特徴量数388 = LGBMの最適バランス点**: bin8(194)は情報損失、bin1(1555)は多重共線性
+2. **Fold 2で3ポイント改善** (27.5→25.1): 細かい特徴量がSpecies 15の高含水率パターンを捕捉
+3. **mm170がFold 2でさらに4ポイント改善** (25.1→23.5): 高含水率のみからWDV合成→より正確な外挿
+
+### 現在の限界
+- ベスト14.12 → 1位 ~10 の差は約4ポイント
+- Fold 2のRMSE ~23がまだ支配的
+- stretch post-processingは限定的（0.2-0.4ポイント）
+- Stackingはbin4モデルが圧倒的に支配、多様性が不足
+
+---
+
+## 実験統計（最終更新）
+
+| フェーズ | 実験数 |
+|---------|--------|
+| Phase 1-10 | ~500 |
+| Phase 12 (PL) | ~20 |
+| Phase 15-15c | ~387 |
+| Phase 16-18 | ~585 |
+| Phase 19-20 | ~280 |
+| Phase 21b-21d | ~200 |
+| **合計** | **~1970+** |
 
 ---
 
 *最終更新: 2026-03-05*
-*現在の安定最良スコア: CV RMSE **15.63** (Universal WDV + 反復PL)*
-*シード依存最良スコア: CV RMSE **15.10** (Targeted WDV + PL, Phase 15c)*
+*現在の安定最良スコア: CV RMSE **14.12** (Binning(4) + Universal WDV + iterPL + stretch)*
+*単体モデル最良: CV RMSE **14.21** (bin4, mm170, n800/lr0.02, UW + iterPL)*
