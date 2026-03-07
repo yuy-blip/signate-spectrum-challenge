@@ -388,13 +388,16 @@ emsc_sg1_w7_b2_H2O (水バンドonly):
 
 ## 8. アンサンブルの知見 (Phase 29b更新)
 
-### 最強のアンサンブル構成
-NNLSアンサンブル (RMSE=15.06) の重み:
-- **46%**: UWV + 全スペクトル LGBM (d3, lr=0.1, seed=123)
-- **42%**: 水帯域のみ LGBM (d3, lr=0.1, seed=42) — **UWVなし**
-- **12%**: 水帯域 + UWV LGBM
+### 最強のアンサンブル構成 (Phase 31更新)
+NNLSアンサンブル (RMSE=**14.89**, 71モデル) の重み:
+- **31%**: uwv_n10_f1.5_m170 (UWV少量合成 — 過剰な合成より少ない方が良い)
+- **22%**: h2o_s7 (水帯域のみ)
+- **20%**: uwv_n20_f1.5_m170 (UWV最適n_aug)
+- **17%**: h2o_s123 (水帯域のみ)
+- **6%**: h2o_s0 (水帯域のみ)
+- **5%**: h2o_uwv_s123 (水帯域+UWV)
 
-→ 「全スペクトル＋UWV」と「水帯域専門家」の**2つの異なる視点**が相補的に機能
+→ **UWV全スペクトル (50%) + 水帯域専門家 (50%)** の比率は安定。水帯域は複数seedで分散。
 
 ### Ridge Stack vs NNLS
 - Ridge Stack: RMSE=19.42 (Phase 29b), 20.80 (Phase 27) — 常に劣る
@@ -403,28 +406,35 @@ NNLSアンサンブル (RMSE=15.06) の重み:
 
 ---
 
-## 9. 1位への道 (Phase 29b後の戦略)
+## 9. 1位への道 (Phase 31後の戦略)
 
 ### 現在地
-- **ルール準拠最良**: CV RMSE **15.06** (Phase 29b NNLS)
+- **ルール準拠最良**: CV RMSE **14.89** (Phase 31 NNLS, 71モデル)
 - **1位推定**: ~10
 - **ギャップ**: ~5ポイント
 
-### Species 15の改善ポテンシャル
-Phase 29b NNLS: Sp15 RMSE = 36.25 (bias -20.3)
-もしSp15のRMSEを25に改善 → 全体RMSE ≈ 14.2
-もしSp15のRMSEを15に改善 → 全体RMSE ≈ 13.5
+### Phase 31で解決済み
+- ✅ UWVパラメータ最適化: n_aug=20が最良（30より良い）
+- ✅ min_moisture=130が若干良い（170と拮抗）
+- ✅ Target transformation: log1p/sqrtはUWVと併用しても悪化 → identityが最適
+- ✅ PP変種: b4/w7が最適、変更の余地なし
+- ✅ LGBM leaves=12-16が若干良い
+
+### Species 15/11の改善ポテンシャル
+Phase 31 NNLS: Sp15 RMSE = 35.41 (bias -20), Sp11 RMSE = 22.12 (bias +16)
+もしSp15のRMSEを25に改善 → 全体RMSE ≈ 14.1
+もしSp15+Sp11のRMSEを半減 → 全体RMSE ≈ 13.0
 
 ### 次に試すべきこと
-1. **Species 15特化モデル**: Sp15はy=[13-299]の広いレンジ。含水率>100のサンプルに特化した「高含水率専門家」
-2. **UWVパラメータ拡張**: extrap_factorの微調整、min_moisture=150との比較
-3. **多段階UWV**: 1段目のUWV予測を使って2段目のUWV生成
-4. **CatBoost/XGBoost向けのUWV最適化**: 現状LGBMしか恩恵を受けていない
-5. **NIR特徴量**: Phase 30の結果待ち（ただし期待薄）
-6. **Target transformation with UWV**: sqrt/log1pとUWVの組み合わせ
+1. **Species 15/11特化**: 高含水率域 (>100%) に特化したモデル or UWVパラメータ
+2. **UWV + 異なるPCA次元数**: 1次元以外の水ベクトル抽出
+3. **Cross-UWV**: 種ごとの水ベクトルの使い分け
+4. **Multi-level UWV**: 1回目のUWV予測を使って2回目のUWVを調整
+5. **異なるEMSC参照**: 全体平均ではなく、特定の樹種群の平均を参照として使用
+6. **アンサンブルの多様性強化**: 現在LGBMのみ → CatBoost向けUWV最適化
 
 ---
 
 *最終更新: 2026-03-07*
 *著者: Claude (Anthropic)*
-*ルール準拠最良: CV RMSE **15.06** (Phase 29b: UWV + NNLS)*
+*ルール準拠最良: CV RMSE **14.89** (Phase 31: UWV最適化 + NNLS)*
