@@ -42,6 +42,8 @@
 | **34** | **14.18** | - | Model diversity (82モデルNNLS) | ★ MLP水帯域が23%重み |
 | **35** | **13.85** | - | MLP expansion (100モデルNNLS) | ★ MLP多様性が31%重み |
 | **36** | **13.75** | - | PLS+stacking+MLP UWV (83モデル) | PLS 2.6%重み、MLP UWV 19% |
+| 37 | 13.75 | - | RF/ExtraTrees/SS-EMSC (56モデル) | 改善なし |
+| **38** | **13.72** | - | Spectral regions+Huber/MAE (63モデル) | OH overtone MLP 6%重み |
 
 ---
 
@@ -1656,6 +1658,6 @@ UWV config: n_aug=30, extrap_factor=1.5, min_moisture=170
 ---
 
 *最終更新: 2026-03-07*
-*現在のルール準拠最良スコア: **CV RMSE 13.75** (Phase 36: PLS+MLP Diversity NNLS)*
+*現在のルール準拠最良スコア: **CV RMSE 13.72** (Phase 38: Spectral Regions NNLS)*
 *PL-free単体最良: **CV RMSE 15.65** (Phase 33: Quantile UWV s7)*
 *PL含む参考スコア: ~~CV RMSE 13.60~~ (Phase 23 — ❌ルール違反)*
