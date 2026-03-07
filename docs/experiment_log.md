@@ -37,6 +37,7 @@
 | 28 | - | - | PP+モデル多様性 (657実験) | OOMで結果未保存 |
 | **29b** | **15.06** | - | UWV + NNLS ensemble | ★★★ ブレークスルー7 ✅ルール準拠 |
 | **31** | **14.89** | - | UWV最適化 + 71モデルNNLS | ✅ Phase 29bから改善 |
+| **32** | **14.55** | - | Mega ensemble (56モデルNNLS) | ✅ 多シード+PP多様性 |
 
 ---
 
@@ -1494,7 +1495,30 @@ UWV config: n_aug=30, extrap_factor=1.5, min_moisture=170
 
 ---
 
+---
+
+## Phase 32: Mega Ensemble (56モデル)
+**目的**: 大量のシード×UWV設定×水帯域モデルでNNLS候補プール最大化
+**結果**: NNLS RMSE **14.55** (Phase 31の14.89からさらに改善)
+
+**NNLS重み**:
+- 0.507: h2o_s555 (水帯域のみ, seed=555) — ★新シードが最強
+- 0.277: uwv20_l12_s123 (UWV + leaves=12)
+- 0.105: uwv10_s123 (UWV n=10)
+- 0.079: uwv_b2full_s42 (bin2全スペクトル+UWV)
+- 0.029: uwv_w9_s123 (window=9+UWV)
+
+**新発見**:
+- leaves=12 + UWV: 15.77 (Phase 31の15.88から改善)
+- 水帯域seed=555が最もNNLS貢献度高い
+- PP多様性 (b2, w9) がNNLSに微量だが寄与
+- Top 3 avg: 14.72 — 単純平均でも良い
+
+**Sp15**: 35.4 → 34.1 (微改善継続)
+
+---
+
 *最終更新: 2026-03-07*
-*現在のルール準拠最良スコア: **CV RMSE 14.89** (Phase 31: UWV最適化 + NNLS)*
-*PL-free単体最良: **CV RMSE 15.88** (UWV n20_f1.5_m170)*
+*現在のルール準拠最良スコア: **CV RMSE 14.55** (Phase 32: Mega Ensemble NNLS)*
+*PL-free単体最良: **CV RMSE 15.77** (UWV n20_l12_s123)*
 *PL含む参考スコア: ~~CV RMSE 13.60~~ (Phase 23 — ❌ルール違反)*

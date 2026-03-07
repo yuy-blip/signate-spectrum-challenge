@@ -437,4 +437,4 @@ Phase 31 NNLS: Sp15 RMSE = 35.41 (bias -20), Sp11 RMSE = 22.12 (bias +16)
 
 *最終更新: 2026-03-07*
 *著者: Claude (Anthropic)*
-*ルール準拠最良: CV RMSE **14.89** (Phase 31: UWV最適化 + NNLS)*
+*ルール準拠最良: CV RMSE **14.55** (Phase 32: Mega Ensemble NNLS)*
