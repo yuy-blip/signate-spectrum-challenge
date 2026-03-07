@@ -40,6 +40,7 @@
 | **32** | **14.55** | - | Mega ensemble (56モデルNNLS) | ✅ 多シード+PP多様性 |
 | 33 | 14.55 | - | Species-targeted (57モデル) | 新戦略はNNLS不採用 |
 | **34** | **14.18** | - | Model diversity (82モデルNNLS) | ★ MLP水帯域が23%重み |
+| **35** | **13.85** | - | MLP expansion (100モデルNNLS) | ★ MLP多様性が31%重み |
 
 ---
 
@@ -1588,7 +1589,43 @@ UWV config: n_aug=30, extrap_factor=1.5, min_moisture=170
 
 ---
 
+---
+
+### Phase 35: MLP Expansion — RMSE 14.18 → **13.85** ★
+
+**目的**: Phase 34のMLP成功を拡大 — 多seed/多architecture/多正則化のMLP水帯域モデル
+
+**100モデル = 4グループ**:
+- A. MLP水帯域: 38モデル (11 seeds × 128x64, 12 architectures × 2 seeds, 3 UWV付き)
+- B. MLP全スペクトルPCA: 10モデル → 全て80-90 RMSE (LOSO CVで壊滅)
+- C. Ridge/ElasticNet変種: 23モデル
+- D. LGBMコア: 29モデル
+
+**NNLS結果**: RMSE **13.8520** (Phase 34から-0.33)
+
+**NNLS重み** (MLP合計 ~31%):
+- lgbm_h2o_s555: 28.1%
+- lgbm_uwv20l12_s123: 19.2%
+- **mlp_h2o_64x32x16_s123: 13.7%** ★新アーキテクチャ
+- lgbm_uwv10_s42: 12.1%
+- **mlp_h2o_uwv_128x64_s0: 7.5%** ★UWV付きMLP
+- **mlp_h2o_128x64x32_s123: 6.5%** ★3層MLP
+- lgbm_uwv_b2_s123: 5.6%
+- mlp_h2o_uwv_128x64_s123: 3.2%
+- lgbm_uwv_b2_s42: 2.4%
+- ridge_h2o_uwv_a5.0: 1.6%
+
+**Per-species改善** (vs Phase 34):
+| Species | Phase 34 | Phase 35 | 改善 |
+|---------|---------|---------|------|
+| Sp3 | 12.47 | 10.96 | -1.51 |
+| Sp13 | 5.15 | 4.47 | -0.68 |
+| Sp15 | 32.78 | 31.74 | -1.04 |
+| Sp17 | 8.99 | 8.97 | -0.02 |
+
+---
+
 *最終更新: 2026-03-07*
-*現在のルール準拠最良スコア: **CV RMSE 14.18** (Phase 34: Model Diversity NNLS)*
+*現在のルール準拠最良スコア: **CV RMSE 13.85** (Phase 35: MLP Expansion NNLS)*
 *PL-free単体最良: **CV RMSE 15.65** (Phase 33: Quantile UWV s7)*
 *PL含む参考スコア: ~~CV RMSE 13.60~~ (Phase 23 — ❌ルール違反)*
