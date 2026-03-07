@@ -406,35 +406,59 @@ NNLSアンサンブル (RMSE=**14.89**, 71モデル) の重み:
 
 ---
 
-## 9. 1位への道 (Phase 31後の戦略)
+## 9. 1位への道 (Phase 33後の戦略)
 
 ### 現在地
-- **ルール準拠最良**: CV RMSE **14.89** (Phase 31 NNLS, 71モデル)
+- **ルール準拠最良**: CV RMSE **14.55** (Phase 32/33 NNLS)
+- **PL-free単体最良**: CV RMSE **15.65** (Phase 33: Quantile UWV s7)
 - **1位推定**: ~10
-- **ギャップ**: ~5ポイント
+- **ギャップ**: ~4.5ポイント
 
-### Phase 31で解決済み
-- ✅ UWVパラメータ最適化: n_aug=20が最良（30より良い）
+### 解決済み（効果なし〜微小の戦略）
+- ✅ UWVパラメータ最適化: n_aug=20が最良
 - ✅ min_moisture=130が若干良い（170と拮抗）
-- ✅ Target transformation: log1p/sqrtはUWVと併用しても悪化 → identityが最適
-- ✅ PP変種: b4/w7が最適、変更の余地なし
+- ✅ Target transformation: log1p/sqrtはUWVと併用しても悪化
+- ✅ PP変種: b4/w7が最適
 - ✅ LGBM leaves=12-16が若干良い
+- ✅ サンプル重み付け: 高誤差種を重視 → 逆効果
+- ✅ 樹種番号を特徴量追加: 微改善だがNNLS不採用
+- ✅ 高外挿UWV (ef=2-3): Sp15をさらに悪化
+- ✅ 2D PCA水ベクトル: 1Dと同等
+- ✅ 残差補正 (2段階): SB-RMSE改善だがRMSE改善なし
+- ✅ 深い木 (d4/d5): 改善なし
 
-### Species 15/11の改善ポテンシャル
-Phase 31 NNLS: Sp15 RMSE = 35.41 (bias -20), Sp11 RMSE = 22.12 (bias +16)
-もしSp15のRMSEを25に改善 → 全体RMSE ≈ 14.1
-もしSp15+Sp11のRMSEを半減 → 全体RMSE ≈ 13.0
+### 分位点UWVの発見
+Phase 33で**quantile split** (Q75/Q25) を使ったUWVが単体RMSE 15.65を達成（従来のmedian splitは16.02）。ただしNNLSでは採用されず — h2o + UWV full spectrumの組合せが依然として最強。
 
-### 次に試すべきこと
-1. **Species 15/11特化**: 高含水率域 (>100%) に特化したモデル or UWVパラメータ
-2. **UWV + 異なるPCA次元数**: 1次元以外の水ベクトル抽出
-3. **Cross-UWV**: 種ごとの水ベクトルの使い分け
-4. **Multi-level UWV**: 1回目のUWV予測を使って2回目のUWVを調整
-5. **異なるEMSC参照**: 全体平均ではなく、特定の樹種群の平均を参照として使用
-6. **アンサンブルの多様性強化**: 現在LGBMのみ → CatBoost向けUWV最適化
+### NNLS 14.55の壁 → Phase 34で突破 (14.18)
+Phase 33まで: NNLSは常に同じ4つのLGBMモデルを選択。異なるseed/params/戦略では多様性を追加できなかった。
+
+Phase 34: **MLP (ニューラルネットワーク)** を水帯域モデルとして追加 → NNLS重み22.5%を獲得し壁突破。
+
+**なぜMLPが有効か**:
+- MLP単体RMSE=16.45（LGBMの15.80より悪い）
+- しかしNNLSで22.5%の重みを獲得 → **GBDTと相関の低い誤差パターン**
+- 水帯域の非線形パターンをGBDTとは全く異なる形で捉える
+- 特にSp15で予測バイアスが異なり、ブレンドで相殺される
+
+**現在のNNLS最適構成** (14.18):
+1. lgbm_h2o_s555: 35% — GBDT水帯域
+2. lgbm_uwv20l12_s123: 24% — GBDT UWV全スペクトル
+3. **mlp_h2o_128x64: 23%** — NN水帯域 ★新規
+4. lgbm_uwv10_s42: 7% — GBDT UWV全スペクトル
+5. lgbm_uwv_b2_s42: 7% — GBDT 細binning+UWV
+6. lgbm_uwv10_s123: 4%
+7. ridge_h2o: 1% — 線形水帯域
+
+### 次のブレークスルーに必要なこと
+1. **MLP多様性拡大**: 異なるarchitecture/seed/正則化のMLPで更にNNLS多様性を向上
+2. **Stacking**: OOF予測を2段目の特徴量として利用
+3. **樹種クラスタリング**: スペクトル空間で訓練/テスト樹種をクラスタリング
+4. **Semi-supervised前処理**: テストデータの分布をEMSC参照に含める（予測には使わない — ルール準拠）
+5. **Full spectrum MLP/Ridge**: 水帯域だけでなく全スペクトルの非GBDT予測も有効かも
 
 ---
 
 *最終更新: 2026-03-07*
 *著者: Claude (Anthropic)*
-*ルール準拠最良: CV RMSE **14.55** (Phase 32: Mega Ensemble NNLS)*
+*ルール準拠最良: CV RMSE **14.18** (Phase 34: Model Diversity NNLS)*
