@@ -41,6 +41,7 @@
 | 33 | 14.55 | - | Species-targeted (57モデル) | 新戦略はNNLS不採用 |
 | **34** | **14.18** | - | Model diversity (82モデルNNLS) | ★ MLP水帯域が23%重み |
 | **35** | **13.85** | - | MLP expansion (100モデルNNLS) | ★ MLP多様性が31%重み |
+| **36** | **13.75** | - | PLS+stacking+MLP UWV (83モデル) | PLS 2.6%重み、MLP UWV 19% |
 
 ---
 
@@ -1625,7 +1626,36 @@ UWV config: n_aug=30, extrap_factor=1.5, min_moisture=170
 
 ---
 
+---
+
+### Phase 36: PLS + Stacking + MLP UWV — RMSE 13.85 → **13.75**
+
+**83モデル**: PLS (22) + MLP variants (19) + LGBM core (29) + MLP core (9) + Ridge (1) + Stacking (7)
+
+**新発見**:
+- PLS on water bands + UWV (nc=10): RMSE 23.0だがNNLSで2.6%重み — 線形次元削減+回帰の異なる帰納バイアス
+- MLP UWV on water bands: 64x32x16_s42 → 12.8%重み, 128x64x32_s42 → 5.8%重み — UWV付きMLPが重要な多様性源
+- tanh MLP: 26-33 RMSE — relu一択
+- Stacking (2nd level): Ridge 16.0, LGBM 16.5 — NNLSより悪い（NNLSが既に最適ブレンド）
+- **Sp3**: 10.96 → 10.20 (大幅改善), **Sp15**: 31.74 → 31.53
+
+**NNLS重み配分**:
+| モデル | 重み | RMSE |
+|-------|------|------|
+| lgbm_h2o_s555 | 27.6% | 15.80 |
+| lgbm_uwv20l12_s123 | 16.4% | 15.77 |
+| mlp_h2o_uwv_64x32x16_s42 | 12.8% | 17.42 |
+| lgbm_uwv10_s42 | 12.2% | 16.20 |
+| lgbm_uwv_b2_s123 | 7.6% | 16.03 |
+| mlp_h2o_64x32x16_s123 | 6.3% | 16.11 |
+| mlp_h2o_128x64x32_s123 | 6.0% | 16.17 |
+| mlp_h2o_uwv_128x64x32_s42 | 5.8% | 17.57 |
+| lgbm_uwv_b2_s42 | 2.8% | 16.12 |
+| pls_h2o_uwv_nc10 | 2.6% | 22.99 |
+
+---
+
 *最終更新: 2026-03-07*
-*現在のルール準拠最良スコア: **CV RMSE 13.85** (Phase 35: MLP Expansion NNLS)*
+*現在のルール準拠最良スコア: **CV RMSE 13.75** (Phase 36: PLS+MLP Diversity NNLS)*
 *PL-free単体最良: **CV RMSE 15.65** (Phase 33: Quantile UWV s7)*
 *PL含む参考スコア: ~~CV RMSE 13.60~~ (Phase 23 — ❌ルール違反)*
