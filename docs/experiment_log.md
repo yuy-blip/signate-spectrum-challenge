@@ -120,17 +120,20 @@
 | 線形ツリー (linear_tree) | 19.49 | 35.06 |
 | Mixup LGBM | 20.77 | 34.64 |
 
-### Phase 12: 擬似ラベル (20+実験)
-**結果**: 最良 RMSE **16.14**
-**★ ブレークスルー2: 擬似ラベル（Pseudo-labeling）**
-- テストデータの予測値を訓練データに追加し再学習
-- テスト樹種のスペクトルパターンをLGBMが学習できるようになった
-- weight=0.3~1.0の範囲で安定的に改善
+### ~~Phase 12: 擬似ラベル (20+実験)~~ — ❌ ルール違反
+~~**結果**: 最良 RMSE **16.14**~~
+~~**★ ブレークスルー2: 擬似ラベル（Pseudo-labeling）**~~
+~~- テストデータの予測値を訓練データに追加し再学習~~
+~~- テスト樹種のスペクトルパターンをLGBMが学習できるようになった~~
+~~- weight=0.3~1.0の範囲で安定的に改善~~
 
-> **⚠️ 方法論的注意**: PLはテストデータの**特徴量**(X)を訓練に使用する。テストのラベル(y)は使わない（モデル自身の予測を使用）ためコンペルール上は一般に許可されるが、**CVスコアは「PL適用後」の性能であり、純粋な汎化性能ではない**。Phase 27のClean Pipeline (PL/WDVなし) RMSE 17.29 が真のベースライン。PLを含む全実験のCVスコアは楽観的になっている可能性がある。
+> **❌ ルール違反**: コンペルール「**評価用データをモデルの学習に用いることは禁止します**」に抵触。PLはテストデータの**特徴量(X)**を訓練データに追加してモデルを再学習させる。テストのラベル(y)ではなくモデルの予測値を使用するが、テストデータのスペクトル(X)自体がモデル学習に使われるため、ルール上使用不可。
+>
+> **影響範囲**: Phase 12以降、PLを含む全てのブレークスルー(Phase 15b, 15c, 20, 21b-d, 22, 23, 25, 26)のCVスコアはPL込みの値であり、**提出時にはPLなしで再実装する必要がある**。PL抜きの真の実力値はPhase 27の **RMSE 17.29** (NNLS blend)。
 
-### Phase 15: ブレークスルー実験（126実験）
+### Phase 15: ブレークスルー実験（126実験） ⚠️ 一部PL含む
 **目的**: Gemini/ChatGPTの提案を含む大規模検証
+> **⚠️ 注意**: PLS外挿型擬似ラベルなど、一部にPL(ルール違反)を含む実験あり。PLなしの実験結果（WDV, Band Ratio等）は有効。
 **試行した手法と結果**:
 
 | 手法 | RMSE | Fold 2 | 評価 |
@@ -149,10 +152,11 @@
 - ChatGPTの「EMSCがPLSを壊す」仮説は誤り（EMSC無しでも同様に壊滅）
 - WDVがFold 2を30.7→27.4に改善（外挿の壁を初めて物理的に突破）
 
-### Phase 15b: 洗練実験（61実験）
-**目的**: Phase 15の発見を深掘り
-**結果**: 最良 RMSE **15.58**
-**★ ブレークスルー3: WDV + 擬似ラベル**
+### ~~Phase 15b: 洗練実験（61実験）~~ — ❌ PL使用（ルール違反）
+~~**目的**: Phase 15の発見を深掘り~~
+~~**結果**: 最良 RMSE **15.58**~~
+~~**★ ブレークスルー3: WDV + 擬似ラベル**~~
+> **❌ 全実験がPLを含むためルール違反。WDV自体は有効だが、PLとの組み合わせ結果は提出不可。**
 
 **Top 5結果**:
 | RMSE | Fold 2 | 手法 |
@@ -169,10 +173,11 @@
 
 **Ordinal Expectation**: 未試行（15cで実施）
 
-### Phase 15c: Targeted WDV最適化（200+実験）
-**目的**: 条件付きWDV（高含水率サンプルのみ合成）の最適化
-**結果**: 最良 RMSE **15.10**
-**★ ブレークスルー4: Targeted WDV**
+### ~~Phase 15c: Targeted WDV最適化（200+実験）~~ — ❌ PL使用（ルール違反）
+~~**目的**: 条件付きWDV（高含水率サンプルのみ合成）の最適化~~
+~~**結果**: 最良 RMSE **15.10**~~
+~~**★ ブレークスルー4: Targeted WDV**~~
+> **❌ 全実験がPLを含むためルール違反。Targeted WDVの最適パラメータ知見はPLなしで再検証が必要。**
 
 **Top 10結果**:
 | RMSE | Folds | 手法 |
@@ -364,8 +369,9 @@
 - Water proxy teacher: RMSE 18.5（効果薄い）
 - Water bands only: RMSE 55.7（情報不足）
 
-### Phase 20: Universal WDV深掘り最適化
-**結果**: 最良 RMSE **15.63** (uw_iterpl2_pw0.5)
+### ~~Phase 20: Universal WDV深掘り最適化~~ — ❌ PL使用（ルール違反）
+~~**結果**: 最良 RMSE **15.63** (uw_iterpl2_pw0.5)~~
+> **❌ iterPLを含むためルール違反。UWV自体（PLなし RMSE 16.79-16.91）は有効。**
 
 **Top結果**:
 | RMSE | Folds | 手法 |
@@ -420,11 +426,13 @@
 
 ---
 
-## Phase 21: Mega Strategy (Stacking + Ceiling Breaking + Species 15 Attack)
+## Phase 21: Mega Strategy (Stacking + Ceiling Breaking + Species 15 Attack) — ❌ PL使用
 
-### Phase 21b: 多様なモデル + iterPL修正
-**目的**: 3戦略同時実行（Stacking, Ceiling Breaking, Species 15 Attack）
-**★★ 重大発見: Binning(4)がBinning(8)より大幅に良い**
+> **❌ Phase 21全体がiterPLを使用しておりルール違反。ただし、Binning(4)の発見など前処理パラメータの知見はPLなしでも有効（Phase 27で確認済み）。**
+
+### ~~Phase 21b: 多様なモデル + iterPL修正~~ — ❌ PL使用
+~~**目的**: 3戦略同時実行（Stacking, Ceiling Breaking, Species 15 Attack）~~
+**★★ 重大発見: Binning(4)がBinning(8)より大幅に良い** ← この知見自体は有効
 
 | 手法 | RMSE | Fold 2 | 評価 |
 |------|------|--------|------|
@@ -444,9 +452,10 @@
 - Residual correction (Ridge on water features): 20.5（効果なし）
 - Quantile calibration: 効果なし
 
-### Phase 21c: Binning深掘り + Full Tuning
-**目的**: bin4発見を軸にしたフルチューニング
-**結果**: 最良 RMSE **14.12** (greedy ensemble + stretch)
+### ~~Phase 21c: Binning深掘り + Full Tuning~~ — ❌ PL使用
+~~**目的**: bin4発見を軸にしたフルチューニング~~
+~~**結果**: 最良 RMSE **14.12** (greedy ensemble + stretch)~~
+> **❌ PL使用。Binning sweep結果のトレンド（bin4最適）はPLなしでも有効な知見。**
 
 **Binning sweep**:
 | Bin size | RMSE | Fold 2 | 特徴量数 |
@@ -487,9 +496,9 @@
 | NM optimized (0.55 × mm170 + 0.45 × n1000) | 14.26 |
 | + stretch (p97, s1.3) | **14.12** |
 
-### Phase 21d: 勝利組み合わせの精錬
-**目的**: mm170 × 各種HP、細かいmm探索、多ラウンドPL
-**結果**: 最良 RMSE **14.16** (greedy ensemble + stretch)
+### ~~Phase 21d: 勝利組み合わせの精錬~~ — ❌ PL使用
+~~**目的**: mm170 × 各種HP、細かいmm探索、多ラウンドPL~~
+~~**結果**: 最良 RMSE **14.16** (greedy ensemble + stretch)~~
 
 **mm170 × HP最良**:
 | 手法 | RMSE | Fold 2 |
@@ -536,10 +545,12 @@
 
 ---
 
-## Phase 22: The Final Exorcism (170実験)
+## ~~Phase 22: The Final Exorcism (170実験)~~ — ❌ PL使用
+
+> **❌ Phase 22全体がPLベースのモデルを使用しておりルール違反。ただし、Moisture Weighting, Ultra-slow learnerなどの学習テクニック自体はPLなしでも適用可能な知見。**
 
 ### 目的
-Phase 21dの14.12をさらに改善するための包括的探索。Gemini/ChatGPTの提案を含む7戦略を同時検証。
+~~Phase 21dの14.12をさらに改善するための包括的探索。Gemini/ChatGPTの提案を含む7戦略を同時検証。~~
 
 ### 試行した戦略と結果
 
@@ -554,7 +565,8 @@ Phase 21dの14.12をさらに改善するための包括的探索。Gemini/ChatG
 
 **考察**: EMSC + SG + Binning(4)で前処理済みの特徴量に対して、raw spectraから計算した物理特徴量を追加しても、次元の呪いとノイズ増加で悪化。LGBMは既にbin4特徴量から水分情報を十分に抽出できている。
 
-#### B. Adversarial Validation Sample Reweighting — ❌失敗
+#### ~~B. Adversarial Validation Sample Reweighting~~ — ❌失敗 + ⚠️ルール上グレー
+> **⚠️ ルール上グレー**: テストデータの特徴量(X)をTrain/Test判別器の学習に使用。判別結果を間接的にsample_weightとして訓練に反映するため、「評価用データをモデルの学習に用いる」ことの間接的な利用に該当する可能性あり。
 Train/Test判別器（LGBM, AUC~0.85）のスコアをsample_weightとして使用。
 | weight_power | RMSE | 評価 |
 |-------------|------|------|
@@ -702,10 +714,12 @@ Greedy forward selectionで4モデルが選択：
 
 ---
 
-## Phase 23: The Weight of Truth — 全方位攻撃 (325+実験)
+## ~~Phase 23: The Weight of Truth — 全方位攻撃 (325+実験)~~ — ❌ PL使用
+
+> **❌ PLベース。含水率重み付けやHP多様性の知見自体はPLなしで再利用可能。**
 
 ### 目的
-Phase 22の13.87をさらに改善するため、含水率重み付け・ターゲット変換・多様性HP・WDVパラメータの網羅的探索。
+~~Phase 22の13.87をさらに改善するため、含水率重み付け・ターゲット変換・多様性HP・WDVパラメータの網羅的探索。~~
 
 ### 試行した戦略と結果
 
@@ -773,10 +787,12 @@ Phase 25に統合して実施。単体フェーズとしては未完了。
 
 ---
 
-## Phase 25: The Ultimate Hydrometer (20+実験)
+## ~~Phase 25: The Ultimate Hydrometer (20+実験)~~ — ❌ PL使用
+
+> **❌ PLベース。条件付きアンサンブル(Sigmoid gating)の知見はPLなしでも適用可能。**
 
 ### 目的
-条件付きアンサンブル（ゲーティング）、WDV射影特徴量、非対称損失、Isotonic補正の検証。
+~~条件付きアンサンブル（ゲーティング）、WDV射影特徴量、非対称損失、Isotonic補正の検証。~~
 
 ### 結果
 最良 RMSE **13.90** — Phase 23の13.67から**後退**（+0.23）
@@ -833,10 +849,12 @@ Sigmoid関数で含水率予測値に応じて重みを切り替え。
 
 ---
 
-## Phase 26: The Spectral Decoupling — 全AI連合攻撃
+## ~~Phase 26: The Spectral Decoupling — 全AI連合攻撃~~ — ❌ PL使用 + テスト参照EMSC
+
+> **❌ PLベース。加えてテスト参照EMSCはテストデータの平均スペクトルを前処理に使用しており、ルール違反の可能性あり。Wavelet特徴量(DWT)の知見自体はPLなしでも有効。**
 
 ### 目的
-Wavelet特徴量、MCR-ALS、テスト参照EMSC、Piecewise補正の検証。Phase 23の325モデル+新規モデルの超大規模アンサンブル。
+~~Wavelet特徴量、MCR-ALS、テスト参照EMSC、Piecewise補正の検証。Phase 23の325モデル+新規モデルの超大規模アンサンブル。~~
 
 ### 結果
 最良 RMSE **13.5954** — Phase 23の13.67から **0.07改善**
@@ -1156,20 +1174,27 @@ Phase 28では以下を追加:
 
 | Phase | 最良RMSE | 手法 | 備考 |
 |-------|---------|------|------|
-| 1 | 21.22 | LGBM baseline | |
-| 4 | 18.92 | EMSC導入 | ★ブレークスルー1 |
-| 12 | 16.14 | 擬似ラベル | ★ブレークスルー2 |
-| 15b | 15.58 | WDV + PL | ★ブレークスルー3 |
-| 15c | 15.10* | Targeted WDV + PL | ★ブレークスルー4 (*シード依存) |
-| 20 | 15.63 | Universal WDV + iterPL | 安定ベスト |
-| 21b | 14.83 | Binning(4) + UW + iterPL | ★★ブレークスルー5 |
-| 21c | 14.12 | Ensemble + stretch | ★★ブレークスルー6 |
-| 22 | 13.87 | MW + diversity + p99 stretch | ★★ブレークスルー7 |
-| 23 | 13.67 | 325モデル全方位アンサンブル | ★★ブレークスルー8 |
-| 25 | 13.90 | 条件付きアンサンブル（後退） | |
-| 26 | 13.60 | Wavelet + Piecewise + Mega Ensemble | ★★ブレークスルー9 |
-| 27 | 17.29 | Clean Pipeline (PL/WDVなし純粋NNLS) | ベースライン確認 |
-| **28** | **進行中** | **Physics + Model Diversity** | 多様性追加 |
+| 1 | 21.22 | LGBM baseline | ✅ ルール準拠 |
+| 4 | 18.92 | EMSC導入 | ✅ ★ブレークスルー1 |
+| ~~12~~ | ~~16.14~~ | ~~擬似ラベル~~ | ❌ PL使用（ルール違反） |
+| ~~15b~~ | ~~15.58~~ | ~~WDV + PL~~ | ❌ PL使用 |
+| ~~15c~~ | ~~15.10*~~ | ~~Targeted WDV + PL~~ | ❌ PL使用 |
+| ~~20~~ | ~~15.63~~ | ~~Universal WDV + iterPL~~ | ❌ PL使用 |
+| ~~21b~~ | ~~14.83~~ | ~~Binning(4) + UW + iterPL~~ | ❌ PL使用 |
+| ~~21c~~ | ~~14.12~~ | ~~Ensemble + stretch~~ | ❌ PL使用 |
+| ~~22~~ | ~~13.87~~ | ~~MW + diversity + p99 stretch~~ | ❌ PL使用 |
+| ~~23~~ | ~~13.67~~ | ~~325モデル全方位アンサンブル~~ | ❌ PL使用 |
+| ~~25~~ | ~~13.90~~ | ~~条件付きアンサンブル~~ | ❌ PL使用 |
+| ~~26~~ | ~~13.60~~ | ~~Wavelet + Piecewise + Mega Ensemble~~ | ❌ PL使用 |
+| **27** | **17.29** | **Clean Pipeline (PL/WDVなし純粋NNLS)** | ✅ **ルール準拠ベースライン** |
+| **28** | **進行中** | **Physics + Model Diversity** | ✅ ルール準拠 |
+
+> **⚠️ ルール準拠のベストスコア**: Phase 27の **RMSE 17.29** (NNLS blend)
+> Phase 12-26のスコアはPL使用のため提出不可。ただし、以下の知見はPLなしで再利用可能：
+> - EMSC + SG 1次微分 + Binning(4) が最適前処理
+> - Universal WDV（訓練データのみ使用、ルール準拠）
+> - Moisture Weighting, HP多様性, Wavelet特徴量
+> - Greedy + NM ensemble最適化
 
 ---
 
